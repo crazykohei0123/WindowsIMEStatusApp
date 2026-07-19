@@ -1,0 +1,48 @@
+<Window x:Class="ImeStatusOverlay.CalibrationWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="IME状態表示 - キャリブレーション"
+        Width="520" SizeToContent="Height"
+        WindowStartupLocation="CenterScreen"
+        Topmost="True"
+        ResizeMode="NoResize"
+        Background="#FF1E1E1E"
+        Foreground="#FFF3F3F3"
+        FontFamily="Yu Gothic UI, Meiryo UI, Segoe UI">
+    <StackPanel Margin="24">
+        <TextBlock Text="あ / A を自動で学習します"
+                   FontSize="18" FontWeight="Bold" Margin="0,0,0,10" />
+
+        <TextBlock TextWrapping="Wrap" Margin="0,0,0,10"
+                   Text="「開始」を押したら 8 秒以内に、半角/全角キーで何度か IME を ON/OFF 切り替えてください。タスクバーの表示が変化するのを検出して、自動で「あ」と「A」を学習します。" />
+
+        <Button x:Name="StartButton" Content="開始" Padding="16,8"
+                FontSize="14" Click="Start_Click" />
+
+        <TextBlock x:Name="Status" Text="" Foreground="#FF9AA0A6" Margin="0,10,0,0" />
+
+        <Grid x:Name="PreviewPanel" Margin="0,14,0,0" Visibility="Collapsed">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" Margin="0,0,6,0">
+                <TextBlock Text="OFF (A)" FontWeight="Bold" />
+                <Border Background="Black" CornerRadius="6" Padding="8" Margin="0,4,0,0">
+                    <TextBlock x:Name="OffPreview" FontFamily="Consolas, MS Gothic"
+                               FontSize="10" Foreground="#4ADE80" LineHeight="1" />
+                </Border>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Margin="6,0,0,0">
+                <TextBlock Text="ON (あ)" FontWeight="Bold" />
+                <Border Background="Black" CornerRadius="6" Padding="8" Margin="0,4,0,0">
+                    <TextBlock x:Name="OnPreview" FontFamily="Consolas, MS Gothic"
+                               FontSize="10" Foreground="#4ADE80" LineHeight="1" />
+                </Border>
+            </StackPanel>
+        </Grid>
+
+        <Button x:Name="DoneButton" Content="完了して監視を開始" Padding="16,8"
+                FontSize="14" IsEnabled="False" Click="Done_Click" Margin="0,14,0,0" />
+    </StackPanel>
+</Window>

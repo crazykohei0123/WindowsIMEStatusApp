@@ -1,2 +1,67 @@
-# WindowsIMEStatusApp
-A lightweight Windows 11 application that displays the current IME status (ON/OFF) in the center of the screen in real-time. Built specifically to support third-party IMEs like Google Japanese Input using the modern Text Services Framework (TSF) API.
+# WindowsIMEStatusApp (ImeStatusOverlay)
+
+Google 日本語入力をはじめとする IME の **ON(あ)/OFF(A)** を切り替えたとき、画面中央に大きく **「IME ON」「IME OFF」** を一瞬表示する Windows 11 用の常駐アプリです。
+
+タスクバー右端の **IME モードインジケーター(あ / A の文字)を画素から判定**するだけの、シンプルで安全な仕組みです。IMM32 や TSF には一切依存せず、フックや DLL インジェクションも使いません。
+
+## 特徴
+
+- **あ / A を画素判定**: タスクバーのモード表示を定期キャプチャし、テンプレートマッチングで ON/OFF を判定します。TSF 専用の Google 日本語入力でも、タスクバーに出る表示をそのまま読むので確実に検出できます。
+- **注入・フックなし**: 他プロセスに一切干渉しません。
+- **画面中央に大きく表示**: 透明・クリックスルー・最前面のオーバーレイで、フェードイン → 表示 → フェードアウト。
+- **かんたん自動キャリブレーション**: 初回は、切り替えを数回行うだけで「あ」と「A」を自動学習します。テーマや DPI が変わってもトレイから再学習できます。
+- **常駐トレイアプリ**: スタートアップ登録にも対応。
+
+## 動作環境
+
+- Windows 11
+- .NET 9 ランタイム(デスクトップ)
+- タスクバーに IME モードインジケーター(あ / A)が表示されていること
+
+## ビルド
+
+```
+dotnet build src\ImeStatusOverlay\ImeStatusOverlay.csproj -c Release
+```
+
+実行ファイルは `src\ImeStatusOverlay\bin\Release\net9.0-windows\ImeStatusOverlay.exe` に生成されます。
+
+## 使い方
+
+1. `ImeStatusOverlay.exe` を起動します。
+2. 初回はキャリブレーションウィンドウが開きます。
+   - 「開始」を押し、8 秒以内にメモ帳などで **半角/全角キーで何度か IME を ON/OFF 切り替え**ます。
+   - 「あ」と「A」のパターンが自動で学習・プレビューされたら「完了して監視を開始」を押します。
+3. 以後、IME を切り替えるたびに画面中央へ「IME ON」「IME OFF」が表示されます。
+
+学習データは `%APPDATA%\ImeStatusOverlay\templates.json` に保存されます。
+
+### トレイメニュー
+
+- **今の状態を表示**: 現在の判定状態を一度だけ表示します。
+- **再キャリブレーション**: テーマや DPI、タスクバー構成を変えたときに再学習します。
+- **スタートアップに登録**: ログオン時に自動起動します(トグル)。
+- **終了**: アプリを終了します。
+
+## 仕組み
+
+1. UI Automation でタスクバー(`Shell_TrayWnd`)内の「トレイ入力インジケーター(IME のオプション)」ボタンを特定し、そのアイコン領域を取得します。
+2. 200ms ごとに領域をキャプチャしてグレースケール化し、学習済みテンプレート(あ / A)との平均絶対差で判定します。
+3. 状態が変わったときだけ、オーバーレイを表示します(チラつき防止のデバウンス付き)。
+
+なお、インジケーター位置はタスクバー構成の変化に合わせて定期的に再取得します。
+
+## 開発用スクリプト(`scripts/`)
+
+画素判定のデバッグに使える PowerShell です。
+
+- `probe-indicator.ps1`: タスクバーの UI ツリーからインジケーター候補を列挙
+- `show-glyph.ps1`: 指定領域の字形を ASCII アートで表示
+- `watch-indicator.ps1`: 領域を連続キャプチャして変化を解析
+- `inspect-templates.ps1`: 保存済みテンプレートを確認
+
+## 注意事項
+
+- タスクバーのモードインジケーターが隠れている(通知領域のオーバーフローに格納されている)場合は検出できません。タスクバーに表示されるようにしてください。
+- 管理者権限で動作している必要はありません。
+- 画面のテーマ(ライト/ダーク)や拡大率を変更した場合は、再キャリブレーションしてください。

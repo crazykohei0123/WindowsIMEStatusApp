@@ -1,0 +1,23 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v9.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v9.0": {
+      "ImeStatusOverlay/1.0.0": {
+        "runtime": {
+          "ImeStatusOverlay.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "ImeStatusOverlay/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}
