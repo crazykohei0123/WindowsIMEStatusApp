@@ -44,6 +44,28 @@ build/
 Build/
 build-*/
 
+# .NET build output directories
+bin/
+obj/
+[Bb]in/
+[Oo]bj/
+
+# .NET user-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio auto-generated files
+*.vcxproj.filters
+*.vcxproj.user
+
+# NuGet packages
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+
 # CMake generated files
 CMakeFiles/
 CMakeCache.txt
