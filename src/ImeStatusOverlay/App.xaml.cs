@@ -1,6 +1,11 @@
 using System.Drawing;
 using System.Windows;
 using System.Windows.Threading;
+using ImeStatusOverlay.Detection;
+using ImeStatusOverlay.Recognition;
+using ImeStatusOverlay.Startup;
+using ImeStatusOverlay.Storage;
+using ImeStatusOverlay.UI;
 using WinForms = System.Windows.Forms;
 
 namespace ImeStatusOverlay;
@@ -9,10 +14,10 @@ public partial class App : System.Windows.Application
 {
     private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(200);
     private static readonly TimeSpan RelocateInterval = TimeSpan.FromSeconds(2);
-    private const int StableCountRequired = 2; // consecutive reads to commit a change
 
     private Classifier _classifier = null!;
     private AppSettings _settings = null!;
+    private ImeStateTracker _tracker = null!;
     private OverlayWindow _overlay = null!;
     private WinForms.NotifyIcon _tray = null!;
     private DispatcherTimer _timer = null!;
@@ -20,16 +25,13 @@ public partial class App : System.Windows.Application
     private Rectangle? _region;
     private DateTime _regionLocatedAt = DateTime.MinValue;
 
-    private ImeState _committed = ImeState.Unknown;
-    private ImeState _candidate = ImeState.Unknown;
-    private int _candidateCount;
-
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
 
         _classifier = new Classifier();
         _settings = new AppSettings();
+        _tracker = new ImeStateTracker();
         _overlay = new OverlayWindow();
         SetupTray();
 
@@ -72,9 +74,7 @@ public partial class App : System.Windows.Application
         var win = new CalibrationWindow(_classifier);
         win.ShowDialog();
         // Reset detection so the freshly calibrated state is picked up cleanly.
-        _committed = ImeState.Unknown;
-        _candidate = ImeState.Unknown;
-        _candidateCount = 0;
+        _tracker.Reset();
         _region = null;
         _timer?.Start();
     }
@@ -105,37 +105,8 @@ public partial class App : System.Windows.Application
             var data = Indicator.CaptureGray(_region.Value, out int w, out int h);
             var state = _classifier.Classify(data, w, h);
 
-            if (state == ImeState.Unknown)
-            {
-                // Ambiguous or size mismatch: do not change the committed state.
-                _candidate = ImeState.Unknown;
-                _candidateCount = 0;
-                return;
-            }
-
-            if (state == _committed)
-            {
-                _candidate = ImeState.Unknown;
-                _candidateCount = 0;
-                return;
-            }
-
-            // Debounce: require the same new state a few reads in a row.
-            if (state == _candidate)
-                _candidateCount++;
-            else
-            {
-                _candidate = state;
-                _candidateCount = 1;
-            }
-
-            if (_candidateCount >= StableCountRequired)
-            {
-                _committed = state;
-                _candidate = ImeState.Unknown;
-                _candidateCount = 0;
-                _overlay.ShowState(state, _settings.OnText, _settings.OffText);
-            }
+            if (_tracker.OnSample(state, out ImeState committed))
+                _overlay.ShowState(committed, _settings.OnText, _settings.OffText);
         }
         catch
         {
@@ -145,8 +116,8 @@ public partial class App : System.Windows.Application
 
     private void ShowCurrentOnce()
     {
-        if (_committed != ImeState.Unknown)
-            _overlay.ShowState(_committed, _settings.OnText, _settings.OffText);
+        if (_tracker.Committed != ImeState.Unknown)
+            _overlay.ShowState(_tracker.Committed, _settings.OnText, _settings.OffText);
     }
 
     private void ShowSettings()

@@ -1,6 +1,7 @@
 using System.Windows;
+using ImeStatusOverlay.Storage;
 
-namespace ImeStatusOverlay;
+namespace ImeStatusOverlay.UI;
 
 public partial class SettingsWindow : Window
 {

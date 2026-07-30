@@ -1,7 +1,9 @@
 using System.Drawing;
+using System.Drawing.Imaging;
+using System.Runtime.InteropServices;
 using System.Windows.Automation;
 
-namespace ImeStatusOverlay;
+namespace ImeStatusOverlay.Detection;
 
 /// <summary>
 /// Locates the IME mode indicator (the あ / A glyph) in the taskbar via UI
@@ -84,20 +86,39 @@ public static class Indicator
         width = Math.Max(1, rect.Width);
         height = Math.Max(1, rect.Height);
 
-        using var bmp = new Bitmap(width, height);
-        using (var g = Graphics.FromImage(bmp))
-        {
-            g.CopyFromScreen(rect.Left, rect.Top, 0, 0, new Size(width, height));
-        }
+        using var bmp = new Bitmap(width, height, PixelFormat.Format32bppArgb);
+        using (var gfx = Graphics.FromImage(bmp))
+            gfx.CopyFromScreen(rect.Left, rect.Top, 0, 0, new Size(width, height));
 
         var data = new byte[width * height];
-        for (int y = 0; y < height; y++)
+        var bd = bmp.LockBits(
+            new Rectangle(0, 0, width, height),
+            ImageLockMode.ReadOnly,
+            PixelFormat.Format32bppArgb);
+        try
         {
-            for (int x = 0; x < width; x++)
+            int stride = bd.Stride;
+            var raw = new byte[height * stride];
+            Marshal.Copy(bd.Scan0, raw, 0, raw.Length);
+
+            // Format32bppArgb is laid out in memory as BGRA per pixel.
+            for (int y = 0; y < height; y++)
             {
-                var c = bmp.GetPixel(x, y);
-                data[y * width + x] = (byte)((c.R * 299 + c.G * 587 + c.B * 114) / 1000);
+                int row = y * stride;
+                int dst = y * width;
+                for (int x = 0; x < width; x++)
+                {
+                    int i = row + x * 4;
+                    byte b = raw[i];
+                    byte g = raw[i + 1];
+                    byte r = raw[i + 2];
+                    data[dst + x] = (byte)((r * 299 + g * 587 + b * 114) / 1000);
+                }
             }
+        }
+        finally
+        {
+            bmp.UnlockBits(bd);
         }
         return data;
     }

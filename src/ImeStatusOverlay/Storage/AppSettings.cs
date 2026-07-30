@@ -1,7 +1,6 @@
 using System.IO;
-using System.Text.Json;
 
-namespace ImeStatusOverlay;
+namespace ImeStatusOverlay.Storage;
 
 /// <summary>
 /// User-facing settings (overlay label texts, etc.) persisted under %APPDATA%.
@@ -11,7 +10,7 @@ public sealed class AppSettings
     public const string DefaultOnText = "IME ON";
     public const string DefaultOffText = "IME OFF";
 
-    private readonly string _storePath;
+    private readonly JsonStore<SettingsModel> _store;
 
     public string OnText { get; private set; } = DefaultOnText;
     public string OffText { get; private set; } = DefaultOffText;
@@ -26,16 +25,20 @@ public sealed class AppSettings
 
     internal AppSettings(string storePath)
     {
-        _storePath = storePath;
-        Directory.CreateDirectory(Path.GetDirectoryName(storePath)!);
-        Load();
+        _store = new JsonStore<SettingsModel>(storePath);
+        var loaded = _store.Load();
+        if (loaded != null)
+        {
+            OnText = Normalize(loaded.OnText, DefaultOnText);
+            OffText = Normalize(loaded.OffText, DefaultOffText);
+        }
     }
 
     public void SetTexts(string? onText, string? offText)
     {
         OnText = Normalize(onText, DefaultOnText);
         OffText = Normalize(offText, DefaultOffText);
-        Save();
+        _store.Save(new SettingsModel { OnText = OnText, OffText = OffText });
     }
 
     private static string Normalize(string? value, string fallback)
@@ -44,36 +47,9 @@ public sealed class AppSettings
         return v.Length == 0 ? fallback : v;
     }
 
-    // ------------------------------------------------------------------
-    // Persistence
-    // ------------------------------------------------------------------
-
-    private sealed class Store
+    private sealed class SettingsModel
     {
         public string? OnText { get; set; }
         public string? OffText { get; set; }
-    }
-
-    private void Save()
-    {
-        try
-        {
-            var s = new Store { OnText = OnText, OffText = OffText };
-            File.WriteAllText(_storePath, JsonSerializer.Serialize(s));
-        }
-        catch { /* persistence is best-effort */ }
-    }
-
-    private void Load()
-    {
-        try
-        {
-            if (!File.Exists(_storePath)) return;
-            var s = JsonSerializer.Deserialize<Store>(File.ReadAllText(_storePath));
-            if (s == null) return;
-            OnText = Normalize(s.OnText, DefaultOnText);
-            OffText = Normalize(s.OffText, DefaultOffText);
-        }
-        catch { /* ignore corrupt store */ }
     }
 }
