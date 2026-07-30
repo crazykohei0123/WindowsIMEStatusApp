@@ -28,4 +28,8 @@
     <Using Remove="System.Drawing" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="ImeStatusOverlay.Tests" />
+  </ItemGroup>
+
 </Project>

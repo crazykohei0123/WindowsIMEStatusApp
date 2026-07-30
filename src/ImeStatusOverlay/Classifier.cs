@@ -28,12 +28,17 @@ public sealed class Classifier
     public bool IsCalibrated => _templateOff != null && _templateOn != null;
 
     public Classifier()
-    {
-        var dir = Path.Combine(
+        : this(Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "ImeStatusOverlay");
-        Directory.CreateDirectory(dir);
-        _storePath = Path.Combine(dir, "templates.json");
+            "ImeStatusOverlay",
+            "templates.json"))
+    {
+    }
+
+    internal Classifier(string storePath)
+    {
+        _storePath = storePath;
+        Directory.CreateDirectory(Path.GetDirectoryName(storePath)!);
         Load();
     }
 

@@ -17,12 +17,17 @@ public sealed class AppSettings
     public string OffText { get; private set; } = DefaultOffText;
 
     public AppSettings()
-    {
-        var dir = Path.Combine(
+        : this(Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "ImeStatusOverlay");
-        Directory.CreateDirectory(dir);
-        _storePath = Path.Combine(dir, "settings.json");
+            "ImeStatusOverlay",
+            "settings.json"))
+    {
+    }
+
+    internal AppSettings(string storePath)
+    {
+        _storePath = storePath;
+        Directory.CreateDirectory(Path.GetDirectoryName(storePath)!);
         Load();
     }
 
