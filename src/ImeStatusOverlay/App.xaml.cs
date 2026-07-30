@@ -12,6 +12,7 @@ public partial class App : System.Windows.Application
     private const int StableCountRequired = 2; // consecutive reads to commit a change
 
     private Classifier _classifier = null!;
+    private AppSettings _settings = null!;
     private OverlayWindow _overlay = null!;
     private WinForms.NotifyIcon _tray = null!;
     private DispatcherTimer _timer = null!;
@@ -28,6 +29,7 @@ public partial class App : System.Windows.Application
         base.OnStartup(e);
 
         _classifier = new Classifier();
+        _settings = new AppSettings();
         _overlay = new OverlayWindow();
         SetupTray();
 
@@ -41,6 +43,7 @@ public partial class App : System.Windows.Application
     {
         var menu = new WinForms.ContextMenuStrip();
         menu.Items.Add("今の状態を表示", null, (_, _) => ShowCurrentOnce());
+        menu.Items.Add("設定...", null, (_, _) => ShowSettings());
         menu.Items.Add("再キャリブレーション", null, (_, _) => RunCalibration());
 
         var startupItem = new WinForms.ToolStripMenuItem("スタートアップに登録")
@@ -57,7 +60,7 @@ public partial class App : System.Windows.Application
         _tray = new WinForms.NotifyIcon
         {
             Text = "IME状態表示",
-            Icon = SystemIcons.Application,
+            Icon = LoadAppIcon(),
             Visible = true,
             ContextMenuStrip = menu,
         };
@@ -131,7 +134,7 @@ public partial class App : System.Windows.Application
                 _committed = state;
                 _candidate = ImeState.Unknown;
                 _candidateCount = 0;
-                _overlay.ShowState(state);
+                _overlay.ShowState(state, _settings.OnText, _settings.OffText);
             }
         }
         catch
@@ -143,7 +146,30 @@ public partial class App : System.Windows.Application
     private void ShowCurrentOnce()
     {
         if (_committed != ImeState.Unknown)
-            _overlay.ShowState(_committed);
+            _overlay.ShowState(_committed, _settings.OnText, _settings.OffText);
+    }
+
+    private void ShowSettings()
+    {
+        var win = new SettingsWindow(_settings);
+        win.ShowDialog();
+    }
+
+    private static System.Drawing.Icon LoadAppIcon()
+    {
+        // Prefer the bundled ICO next to the executable; fall back to a system icon.
+        try
+        {
+            var dir = System.AppContext.BaseDirectory;
+            var path = System.IO.Path.Combine(dir, "app.ico");
+            return System.IO.File.Exists(path)
+                ? new System.Drawing.Icon(path)
+                : SystemIcons.Application;
+        }
+        catch
+        {
+            return SystemIcons.Application;
+        }
     }
 
     protected override void OnExit(ExitEventArgs e)

@@ -33,9 +33,11 @@ public partial class OverlayWindow : Window
     }
 
     /// <summary>Shows the big state text centered on the primary monitor.</summary>
-    public void ShowState(ImeState state)
+    public void ShowState(ImeState state, string? onText = null, string? offText = null)
     {
-        StateText.Text = state == ImeState.On ? "IME ON" : "IME OFF";
+        StateText.Text = state == ImeState.On
+            ? (string.IsNullOrWhiteSpace(onText) ? AppSettings.DefaultOnText : onText)
+            : (string.IsNullOrWhiteSpace(offText) ? AppSettings.DefaultOffText : offText);
         StateText.Foreground = new SolidColorBrush(
             state == ImeState.On
                 ? Color.FromRgb(0x4A, 0xDE, 0x80)   // green

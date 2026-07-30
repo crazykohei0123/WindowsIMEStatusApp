@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1E3A8A"/>
+      <stop offset="1" stop-color="#0E7490"/>
+    </linearGradient>
+    <linearGradient id="iris" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#34D399"/>
+      <stop offset="1" stop-color="#0EA5E9"/>
+    </linearGradient>
+    <radialGradient id="glint" cx="0.35" cy="0.35" r="0.6">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Rounded square background (app icon style) -->
+  <rect x="8" y="8" width="240" height="240" rx="48" ry="48" fill="url(#bg)"/>
+
+  <!-- Eye outline (almond shape) -->
+  <path d="M 40 128 Q 128 56 216 128 Q 128 200 40 128 Z"
+        fill="#FFFFFF"/>
+  <path d="M 40 128 Q 128 56 216 128 Q 128 200 40 128 Z"
+        fill="none" stroke="#0F172A" stroke-width="6" stroke-linejoin="round"/>
+
+  <!-- Iris -->
+  <circle cx="128" cy="128" r="44" fill="url(#iris)"/>
+  <circle cx="128" cy="128" r="44" fill="none" stroke="#0F172A" stroke-width="4"/>
+
+  <!-- Pupil -->
+  <circle cx="128" cy="128" r="20" fill="#0F172A"/>
+
+  <!-- Glint highlight -->
+  <circle cx="128" cy="128" r="44" fill="url(#glint)"/>
+  <circle cx="116" cy="116" r="8" fill="#FFFFFF"/>
+
+  <!-- "あ" glyph in pupil to represent IME -->
+  <text x="128" y="135" text-anchor="middle"
+        font-family="Yu Gothic, Meiryo, sans-serif" font-size="22"
+        font-weight="bold" fill="#34D399">あ</text>
+</svg>

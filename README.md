@@ -51,6 +51,17 @@ dotnet build src\ImeStatusOverlay\ImeStatusOverlay.csproj -c Release
 
 なお、インジケーター位置はタスクバー構成の変化に合わせて定期的に再取得します。
 
+## アプリアイコン
+
+アプリのアイコンは `assets/app.svg` をソースとし、`tools/IconGen` でマルチ解像度 ICO に変換します。目玉の中央に「あ」を配置し、IME を見つめているイラストにしています。
+
+```
+dotnet run --project tools\IconGen -- assets\app.ico
+copy assets\app.ico src\ImeStatusOverlay\app.ico
+```
+
+生成された `app.ico` は `ImeStatusOverlay.csproj` の `ApplicationIcon` として EXE に埋め込まれ、トレイアイコン・WPF ウィンドウアイコンにも使用されます。
+
 ## 開発用スクリプト(`scripts/`)
 
 画素判定のデバッグに使える PowerShell です。
