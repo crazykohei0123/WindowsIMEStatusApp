@@ -1,4 +1,4 @@
-using ImeStatusOverlay;
+using ImeStatusOverlay.Recognition;
 
 namespace ImeStatusOverlay.Tests;
 

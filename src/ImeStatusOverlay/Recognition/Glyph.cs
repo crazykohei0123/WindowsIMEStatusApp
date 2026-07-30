@@ -1,4 +1,4 @@
-namespace ImeStatusOverlay;
+namespace ImeStatusOverlay.Recognition;
 
 /// <summary>Helpers for turning a grayscale glyph capture into a binary signature.</summary>
 public static class Glyph
@@ -16,9 +16,11 @@ public static class Glyph
         ink = 0;
         foreach (var v in gray)
         {
-            if (System.Math.Abs(v - bg) > 40) { sb.Append('#'); ink++; }
+            if (System.Math.Abs(v - bg) > ForegroundThreshold) { sb.Append('#'); ink++; }
             else sb.Append('.');
         }
         return sb.ToString();
     }
+
+    private const int ForegroundThreshold = 40;
 }

@@ -1,4 +1,4 @@
-<Window x:Class="ImeStatusOverlay.SettingsWindow"
+<Window x:Class="ImeStatusOverlay.UI.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="IME状態表示 - 設定"

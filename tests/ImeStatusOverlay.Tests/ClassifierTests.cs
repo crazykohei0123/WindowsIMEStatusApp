@@ -1,5 +1,6 @@
 using System.IO;
-using ImeStatusOverlay;
+using ImeStatusOverlay.Detection;
+using ImeStatusOverlay.Recognition;
 
 namespace ImeStatusOverlay.Tests;
 

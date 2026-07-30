@@ -1,15 +1,8 @@
-using System.Drawing;
 using System.IO;
-using System.Text.Json;
+using ImeStatusOverlay.Detection;
+using ImeStatusOverlay.Storage;
 
-namespace ImeStatusOverlay;
-
-public enum ImeState
-{
-    Unknown = 0,
-    Off,    // "A"
-    On      // "あ"
-}
+namespace ImeStatusOverlay.Recognition;
 
 /// <summary>
 /// Classifies the indicator glyph as あ (On) or A (Off) by template matching.
@@ -18,7 +11,9 @@ public enum ImeState
 /// </summary>
 public sealed class Classifier
 {
-    private readonly string _storePath;
+    private const double DecisionMargin = 2.0;
+
+    private readonly JsonStore<TemplateModel> _store;
 
     private int _w;
     private int _h;
@@ -37,8 +32,7 @@ public sealed class Classifier
 
     internal Classifier(string storePath)
     {
-        _storePath = storePath;
-        Directory.CreateDirectory(Path.GetDirectoryName(storePath)!);
+        _store = new JsonStore<TemplateModel>(storePath);
         Load();
     }
 
@@ -70,9 +64,8 @@ public sealed class Classifier
 
         // Pick the closer template. Require a small margin to avoid flicker
         // when the glyph is mid-animation or ambiguous.
-        const double margin = 2.0;
-        if (dOff + margin < dOn) return ImeState.Off;
-        if (dOn + margin < dOff) return ImeState.On;
+        if (dOff + DecisionMargin < dOn) return ImeState.Off;
+        if (dOn + DecisionMargin < dOff) return ImeState.On;
         return ImeState.Unknown;
     }
 
@@ -89,41 +82,32 @@ public sealed class Classifier
     // Persistence
     // ------------------------------------------------------------------
 
-    private sealed class Store
+    private void Save()
+    {
+        _store.Save(new TemplateModel
+        {
+            W = _w,
+            H = _h,
+            Off = _templateOff == null ? null : Convert.ToBase64String(_templateOff),
+            On = _templateOn == null ? null : Convert.ToBase64String(_templateOn),
+        });
+    }
+
+    private void Load()
+    {
+        var m = _store.Load();
+        if (m == null) return;
+        _w = m.W;
+        _h = m.H;
+        _templateOff = m.Off == null ? null : Convert.FromBase64String(m.Off);
+        _templateOn = m.On == null ? null : Convert.FromBase64String(m.On);
+    }
+
+    private sealed class TemplateModel
     {
         public int W { get; set; }
         public int H { get; set; }
         public string? Off { get; set; }
         public string? On { get; set; }
-    }
-
-    private void Save()
-    {
-        try
-        {
-            var s = new Store
-            {
-                W = _w,
-                H = _h,
-                Off = _templateOff == null ? null : Convert.ToBase64String(_templateOff),
-                On = _templateOn == null ? null : Convert.ToBase64String(_templateOn),
-            };
-            File.WriteAllText(_storePath, JsonSerializer.Serialize(s));
-        }
-        catch { /* persistence is best-effort */ }
-    }
-
-    private void Load()
-    {
-        try
-        {
-            if (!File.Exists(_storePath)) return;
-            var s = JsonSerializer.Deserialize<Store>(File.ReadAllText(_storePath));
-            if (s == null) return;
-            _w = s.W; _h = s.H;
-            _templateOff = s.Off == null ? null : Convert.FromBase64String(s.Off);
-            _templateOn = s.On == null ? null : Convert.FromBase64String(s.On);
-        }
-        catch { /* ignore corrupt store */ }
     }
 }

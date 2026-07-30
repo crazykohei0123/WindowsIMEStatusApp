@@ -4,8 +4,10 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
+using ImeStatusOverlay.Detection;
+using ImeStatusOverlay.Storage;
 
-namespace ImeStatusOverlay;
+namespace ImeStatusOverlay.UI;
 
 public partial class OverlayWindow : Window
 {

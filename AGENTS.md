@@ -35,9 +35,14 @@ dotnet test tests/ImeStatusOverlay.Tests/ImeStatusOverlay.Tests.csproj
 ## Architecture
 
 - `src/ImeStatusOverlay/` — メインアプリ（WinExe, WPF + WinForms, x64）。
-  - `App.xaml(.cs)` エントリ、`Indicator.cs` が UI Automation でタスクバーの IME インジケータ位置を取得、`Classifier.cs` が 200ms ごとにキャプチャしてテンプレートマッチング（あ/A）。
-  - `OverlayWindow` が表示、`CalibrationWindow` が初回学習、`SettingsWindow` / `AppSettings` が設定、`StartupRegistration` がスタートアップ登録。
-  - 学習データは `%APPDATA%\ImeStatusOverlay\templates.json`。
+  - `App.xaml(.cs)` エントリ。トレイ構築・200ms ポーリングループを持ち、検出状態のデバウンスは `Detection/ImeStateTracker` に委譲。
+  - `Detection/` — IME 検出のコア。
+    - `ImeState.cs`（ON/OFF/Unknown 列挙）、`Indicator.cs`（UI Automation でタスクバーの IME インジケータ位置を取得・`LockBits` で高速キャプチャ）、`ImeStateTracker.cs`（連続サンプルのデバウンス状態機械・純粋ロジックでテスト対象）。
+  - `Recognition/` — `Glyph.cs`（グレースケール→二値シグネチャ）、`Classifier.cs`（テンプレートマッチング for あ/A）。
+  - `Storage/` — `JsonStore<T>`（ベストエフォト JSON 永続化の共通基盤）、`AppSettings.cs`（表示テキスト設定）。
+  - `UI/` — `OverlayWindow`（表示）、`CalibrationWindow`（初回学習）、`SettingsWindow`（設定）。
+  - `Startup/StartupRegistration.cs` — スタートアップ登録。
+  - 学習データは `%APPDATA%\ImeStatusOverlay\templates.json`、設定は `settings.json`（JSON プロパティ名は後方互換）。
 - `tools/IconGen/` — アイコン生成コンソール（net9.0-windows, WinForms）。`assets/app.svg` をマルチ解像度 ICO に変換。
 - `scripts/` — 画素判定デバッグ用の PowerShell。
 

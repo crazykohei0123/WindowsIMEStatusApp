@@ -1,6 +1,6 @@
 using Microsoft.Win32;
 
-namespace ImeStatusOverlay;
+namespace ImeStatusOverlay.Startup;
 
 /// <summary>Manages the per-user "Run at logon" registry entry.</summary>
 public static class StartupRegistration

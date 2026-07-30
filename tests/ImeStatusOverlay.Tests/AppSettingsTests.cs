@@ -1,5 +1,5 @@
 using System.IO;
-using ImeStatusOverlay;
+using ImeStatusOverlay.Storage;
 
 namespace ImeStatusOverlay.Tests;
 

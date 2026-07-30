@@ -1,8 +1,10 @@
 using System.Drawing;
 using System.Windows;
 using System.Windows.Threading;
+using ImeStatusOverlay.Detection;
+using ImeStatusOverlay.Recognition;
 
-namespace ImeStatusOverlay;
+namespace ImeStatusOverlay.UI;
 
 public partial class CalibrationWindow : Window
 {
