@@ -105,9 +105,9 @@ public class CalibrationValidatorTests
     [Fact]
     public void TrySelect_TemplatesAtExactSeparation_RejectsTemplatesTooClose()
     {
-        // Mean absolute difference == MinimumTemplateSeparation (20.0): rejected.
+        // Mean absolute difference == MinimumTemplateSeparation (22.0): rejected.
         var off = Sample("A", OffGray, ink: 10, count: 20);
-        var on = Sample("あ", new byte[] { 20, 20, 20, 20 }, ink: 50, count: 15);
+        var on = Sample("あ", new byte[] { 22, 22, 22, 22 }, ink: 50, count: 15);
 
         Assert.False(CalibrationValidator.TrySelect(
             new List<CalibrationSample> { off, on }, out var selection, out var rejection));
@@ -118,12 +118,44 @@ public class CalibrationValidatorTests
     [Fact]
     public void TrySelect_TemplatesJustAboveSeparation_Succeeds()
     {
-        // Mean absolute difference 21 > MinimumTemplateSeparation (20.0): accepted.
+        // Mean absolute difference 23 > MinimumTemplateSeparation (22.0): accepted.
         var off = Sample("A", OffGray, ink: 10, count: 20);
-        var on = Sample("あ", new byte[] { 21, 21, 21, 21 }, ink: 50, count: 15);
+        var on = Sample("あ", new byte[] { 23, 23, 23, 23 }, ink: 50, count: 15);
 
         Assert.True(CalibrationValidator.TrySelect(
             new List<CalibrationSample> { off, on }, out var selection, out var rejection));
+        Assert.Equal(CalibrationRejection.None, rejection);
+        Assert.Same(off, selection!.Off);
+        Assert.Same(on, selection.On);
+    }
+
+    [Fact]
+    public void TrySelect_BlankPatternInTopTwo_RejectsEmptyGlyph()
+    {
+        // A frequently-seen blank (input switched / IME disabled) must not
+        // become a template even though its distance to the other glyph is
+        // large enough to pass the separation check (measured: blank vs あ
+        // = 27.21 > 22.0).
+        var blank = Sample("blank", new byte[] { 50, 50, 50, 50 }, ink: 0, count: 20);
+        var off = Sample("A", OffGray, ink: 10, count: 15);
+        var on = Sample("あ", OnGray, ink: 50, count: 12);
+
+        Assert.False(CalibrationValidator.TrySelect(
+            new List<CalibrationSample> { blank, off, on }, out var selection, out var rejection));
+        Assert.Null(selection);
+        Assert.Equal(CalibrationRejection.EmptyGlyph, rejection);
+    }
+
+    [Fact]
+    public void TrySelect_BlankBelowOccurrenceMinimum_IsIgnored()
+    {
+        // A blank seen only once never reaches the top two; calibration succeeds.
+        var blank = Sample("blank", new byte[] { 50, 50, 50, 50 }, ink: 0, count: 1);
+        var off = Sample("A", OffGray, ink: 10, count: 20);
+        var on = Sample("あ", OnGray, ink: 50, count: 15);
+
+        Assert.True(CalibrationValidator.TrySelect(
+            new List<CalibrationSample> { blank, off, on }, out var selection, out var rejection));
         Assert.Equal(CalibrationRejection.None, rejection);
         Assert.Same(off, selection!.Off);
         Assert.Same(on, selection.On);

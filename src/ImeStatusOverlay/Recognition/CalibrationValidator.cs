@@ -23,6 +23,9 @@ public enum CalibrationRejection
     /// <summary>One of the top two patterns was not observed often enough.</summary>
     InsufficientOccurrences,
 
+    /// <summary>One of the top two patterns is blank/near-blank (no glyph).</summary>
+    EmptyGlyph,
+
     /// <summary>The two candidate templates are too similar to tell apart.</summary>
     TemplatesTooClose,
 }
@@ -69,6 +72,17 @@ public static class CalibrationValidator
         if (top.Any(s => s.Count < MinimumOccurrences))
         {
             rejection = CalibrationRejection.InsufficientOccurrences;
+            return false;
+        }
+
+        // Blank/near-blank patterns (input switched away, IME disabled, hidden
+        // taskbar) must not become templates. Their flat background can still
+        // be far from the other glyph (measured: blank vs あ = 27.21) and
+        // would pass the separation check below, mis-learning "blank" as a
+        // state and causing false IME OFF displays at runtime.
+        if (top.Any(s => s.Ink < Classifier.DefaultMinimumInkFraction * s.Gray.Length))
+        {
+            rejection = CalibrationRejection.EmptyGlyph;
             return false;
         }
 

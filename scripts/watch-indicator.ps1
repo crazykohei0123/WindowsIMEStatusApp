@@ -14,7 +14,7 @@ param(
     [int]$DurationSec = 30,
     [int]$IntervalMs = 200,
     [string]$TemplatesPath = (Join-Path $env:APPDATA 'ImeStatusOverlay\templates.json'),
-    [double]$AcceptanceThreshold = 20.0  # Classifier.DefaultAcceptanceThreshold (preview only)
+    [double]$AcceptanceThreshold = 22.0  # Classifier.DefaultAcceptanceThreshold (preview only)
 )
 
 $ErrorActionPreference = 'Stop'
@@ -191,7 +191,9 @@ $patterns = foreach ($kv in $states.GetEnumerator()) {
         $dOff = Get-MeanAbsDiff $kv.Value.Gray $offT
         $dOn = Get-MeanAbsDiff $kv.Value.Gray $onT
         $best = [Math]::Min($dOff, $dOn)
-        if ($best -le $AcceptanceThreshold -and [Math]::Abs($dOff - $dOn) -gt $margin) {
+        if ($kv.Value.Ink -lt 0.02 * $kv.Value.Gray.Length) {
+            $class = 'Unknown(blank)'   # ink gate (Classifier.DefaultMinimumInkFraction)
+        } elseif ($best -le $AcceptanceThreshold -and [Math]::Abs($dOff - $dOn) -gt $margin) {
             $class = if ($dOff -lt $dOn) { 'Off' } else { 'On' }
         } else {
             $class = 'Unknown'
@@ -237,9 +239,13 @@ if (-not $hasTemplates) { exit 0 }
 
 # --- Threshold guidance. ---
 $normal = @($patterns | Where-Object { $_.Class -eq 'Off' -or $_.Class -eq 'On' })
+$blank = @($patterns | Where-Object { $_.Class -eq 'Unknown(blank)' })
 $unknown = @($patterns | Where-Object { $_.Class -eq 'Unknown' })
 Write-Host ''
 Write-Host '=== Threshold guidance ==='
+if ($blank.Count -gt 0) {
+    Write-Host ("Blank group ({0} patterns, ink < 2%): rejected by the ink gate regardless of distance" -f $blank.Count)
+}
 if ($normal.Count -gt 0) {
     $normalMax = ($normal | Measure-Object Best -Maximum).Maximum
     $normalMin = ($normal | Measure-Object Best -Minimum).Minimum

@@ -83,6 +83,9 @@ public partial class CalibrationWindow : Window
                 CalibrationRejection.InsufficientOccurrences =>
                     $"2つのパターンがそれぞれ {CalibrationValidator.MinimumOccurrences} 回以上検出されませんでした。" +
                     "もう一度「開始」を押して、8秒以内にゆっくり何度か切り替えてください。",
+                CalibrationRejection.EmptyGlyph =>
+                    "字形のない空白の表示が多く検出されました。入力方法の切り替えや IME の無効化は行わず、" +
+                    "タスクバーに「あ」と「A」が表示されている状態で、もう一度「開始」を押してください。",
                 CalibrationRejection.TemplatesTooClose =>
                     "検出された2つのパターンが似すぎているため学習を中止しました。" +
                     "タスクバーに「あ」と「A」が正しく表示される状態で、もう一度「開始」を押してください。",
