@@ -11,9 +11,15 @@ namespace ImeStatusOverlay.Recognition;
 /// </summary>
 public sealed class Classifier
 {
-    private const double DecisionMargin = 2.0;
+    private const double SeparationMargin = 2.0;
+
+    // ponytail: single fixed threshold pending real-device distance samples;
+    // tune via scripts/watch-indicator.ps1, split per-template only if A/あ jitter diverges.
+    internal const double DefaultAcceptanceThreshold = 20.0;
 
     private readonly JsonStore<TemplateModel> _store;
+    private readonly double _acceptanceThreshold;
+    private readonly double _separationMargin;
 
     private int _w;
     private int _h;
@@ -31,8 +37,15 @@ public sealed class Classifier
     }
 
     internal Classifier(string storePath)
+        : this(storePath, DefaultAcceptanceThreshold, SeparationMargin)
+    {
+    }
+
+    internal Classifier(string storePath, double acceptanceThreshold, double separationMargin)
     {
         _store = new JsonStore<TemplateModel>(storePath);
+        _acceptanceThreshold = acceptanceThreshold;
+        _separationMargin = separationMargin;
         Load();
     }
 
@@ -47,26 +60,39 @@ public sealed class Classifier
     }
 
     /// <summary>
-    /// Classifies the given grayscale capture. Returns Unknown when it cannot
-    /// decide confidently.
+    /// Classifies the given grayscale capture. Returns Unknown when the glyph
+    /// is not close enough to either learned template (e.g. "×", blank, other
+    /// icon) or cannot be compared.
     /// </summary>
     public ImeState Classify(byte[] data, int w, int h)
     {
         if (!IsCalibrated)
             return ImeState.Unknown;
 
-        // If the capture size changed (e.g., DPI/taskbar change), we cannot compare.
-        if (w != _w || h != _h)
+        // Defensive validation: malformed captures must never be classified.
+        if (data == null ||
+            w <= 0 || h <= 0 ||
+            w != _w || h != _h ||
+            data.Length != w * h ||
+            _templateOff!.Length != data.Length ||
+            _templateOn!.Length != data.Length)
+        {
             return ImeState.Unknown;
+        }
 
         double dOff = MeanAbsDiff(data, _templateOff!);
         double dOn = MeanAbsDiff(data, _templateOn!);
+        double bestDistance = Math.Min(dOff, dOn);
 
-        // Pick the closer template. Require a small margin to avoid flicker
-        // when the glyph is mid-animation or ambiguous.
-        if (dOff + DecisionMargin < dOn) return ImeState.Off;
-        if (dOn + DecisionMargin < dOff) return ImeState.On;
-        return ImeState.Unknown;
+        // Reject glyphs far from BOTH templates (unknown indicator, not IME state).
+        if (bestDistance > _acceptanceThreshold)
+            return ImeState.Unknown;
+
+        // Require a clear separation between the two candidates.
+        if (Math.Abs(dOff - dOn) <= _separationMargin)
+            return ImeState.Unknown;
+
+        return dOff < dOn ? ImeState.Off : ImeState.On;
     }
 
     private static double MeanAbsDiff(byte[] a, byte[] b)

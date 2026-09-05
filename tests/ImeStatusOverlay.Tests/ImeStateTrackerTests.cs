@@ -83,6 +83,31 @@ public class ImeStateTrackerTests
     }
 
     [Fact]
+    public void OnSample_UnknownWhileCommitted_DoesNotChangeOrShow()
+    {
+        var t = new ImeStateTracker();
+        t.OnSample(ImeState.Off, out _);
+        t.OnSample(ImeState.Off, out _); // commit Off
+        for (int i = 0; i < 3; i++)
+        {
+            Assert.False(t.OnSample(ImeState.Unknown, out _));
+            Assert.Equal(ImeState.Off, t.Committed);
+        }
+    }
+
+    [Fact]
+    public void OnSample_ReturnToSameCommittedAfterUnknown_DoesNotReshow()
+    {
+        var t = new ImeStateTracker();
+        t.OnSample(ImeState.Off, out _);
+        t.OnSample(ImeState.Off, out _); // commit Off
+        t.OnSample(ImeState.Unknown, out _);
+        // Back to Off: same as committed => no commit, no re-show.
+        Assert.False(t.OnSample(ImeState.Off, out _));
+        Assert.Equal(ImeState.Off, t.Committed);
+    }
+
+    [Fact]
     public void Reset_ClearsCommittedAndCandidate()
     {
         var t = new ImeStateTracker();
