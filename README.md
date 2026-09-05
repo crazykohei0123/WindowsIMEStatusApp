@@ -31,8 +31,9 @@ dotnet build src\ImeStatusOverlay\ImeStatusOverlay.csproj -c Release
 
 1. `ImeStatusOverlay.exe` を起動します。
 2. 初回はキャリブレーションウィンドウが開きます。
-   - 「開始」を押し、8 秒以内にメモ帳などで **半角/全角キーで何度か IME を ON/OFF 切り替え**ます。
-   - 「あ」と「A」のパターンが自動で学習・プレビューされたら「完了して監視を開始」を押します。
+   - タスクバーに IME モード表示(あ / A)が見えていることを確認します。
+   - 「開始」を押し、8 秒以内にメモ帳などで **半角/全角キーで何度か IME を ON/OFF 切り替え**ます(「あ」と「A」をそれぞれ数回ずつ表示)。
+   - 両パターンがそれぞれ 3 回以上検出され、互いに十分異なると認識されたときだけ学習されます。「あ」と「A」のパターンが自動で学習・プレビューされたら「完了して監視を開始」を押します。
 3. 以後、IME を切り替えるたびに画面中央へ「IME ON」「IME OFF」が表示されます。
 
 学習データは `%APPDATA%\ImeStatusOverlay\templates.json` に保存されます。
@@ -69,7 +70,7 @@ copy assets\app.ico src\ImeStatusOverlay\app.ico
 
 - `probe-indicator.ps1`: タスクバーの UI ツリーからインジケーター候補を列挙
 - `show-glyph.ps1`: 指定領域の字形を ASCII アートで表示
-- `watch-indicator.ps1`: 領域を連続キャプチャして変化を解析
+- `watch-indicator.ps1`: インジケーター領域を UI Automation で自動特定して連続キャプチャし、学習済みテンプレートとの距離(平均絶対差)を集計。受理しきい値(`Classifier.DefaultAcceptanceThreshold`)の調整に使用
 - `inspect-templates.ps1`: 保存済みテンプレートを確認
 
 ## 注意事項
