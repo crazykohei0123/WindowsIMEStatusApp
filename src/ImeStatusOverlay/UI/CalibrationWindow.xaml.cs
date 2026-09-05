@@ -72,30 +72,33 @@ public partial class CalibrationWindow : Window
 
     private void FinalizeSampling()
     {
-        var top = _samples
-            .OrderByDescending(kv => kv.Value.Count)
-            .Take(2)
+        var candidates = _samples
+            .Select(kv => new CalibrationSample(kv.Key, kv.Value.Gray, kv.Value.Ink, kv.Value.Count))
             .ToList();
 
-        if (top.Count < 2)
+        if (!CalibrationValidator.TrySelect(candidates, out var selection, out var rejection) || selection == null)
         {
-            Status.Text = "変化が検出されませんでした。切り替えがタスクバーに反映されるか確認し、もう一度「開始」を押してください。";
+            Status.Text = rejection switch
+            {
+                CalibrationRejection.InsufficientOccurrences =>
+                    $"2つのパターンがそれぞれ {CalibrationValidator.MinimumOccurrences} 回以上検出されませんでした。" +
+                    "もう一度「開始」を押して、8秒以内にゆっくり何度か切り替えてください。",
+                CalibrationRejection.TemplatesTooClose =>
+                    "検出された2つのパターンが似すぎているため学習を中止しました。" +
+                    "タスクバーに「あ」と「A」が正しく表示される状態で、もう一度「開始」を押してください。",
+                _ => "変化が検出されませんでした。切り替えがタスクバーに反映されるか確認し、もう一度「開始」を押してください。",
+            };
             StartButton.IsEnabled = true;
             return;
         }
 
-        // あ (ON) has more ink than A (OFF).
-        var ordered = top.OrderByDescending(kv => kv.Value.Ink).ToList();
-        var on = ordered[0];   // more ink
-        var off = ordered[1];  // less ink
+        _classifier.SetTemplates(selection.Off.Gray, selection.On.Gray, _w, _h);
 
-        _classifier.SetTemplates(off.Value.Gray, on.Value.Gray, _w, _h);
-
-        OffPreview.Text = Render(off.Key);
-        OnPreview.Text = Render(on.Key);
+        OffPreview.Text = Render(selection.Off.Signature);
+        OnPreview.Text = Render(selection.On.Signature);
         PreviewPanel.Visibility = Visibility.Visible;
 
-        Status.Text = $"学習しました (OFF ink={off.Value.Ink}, ON ink={on.Value.Ink})。問題なければ完了してください。";
+        Status.Text = $"学習しました (OFF ink={selection.Off.Ink}, ON ink={selection.On.Ink})。問題なければ完了してください。";
         DoneButton.IsEnabled = true;
         StartButton.IsEnabled = true;
     }

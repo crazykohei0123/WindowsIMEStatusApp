@@ -95,7 +95,8 @@ public sealed class Classifier
         return dOff < dOn ? ImeState.Off : ImeState.On;
     }
 
-    private static double MeanAbsDiff(byte[] a, byte[] b)
+    /// <summary>Mean absolute difference (0..255 per pixel) between two buffers.</summary>
+    internal static double MeanAbsDiff(byte[] a, byte[] b)
     {
         long sum = 0;
         int n = Math.Min(a.Length, b.Length);
