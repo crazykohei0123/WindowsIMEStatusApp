@@ -37,6 +37,10 @@ public partial class OverlayWindow : Window
     /// <summary>Shows the big state text centered on the primary monitor.</summary>
     public void ShowState(ImeState state, string? onText = null, string? offText = null)
     {
+        // Unknown must never fall through to the OFF display.
+        if (state == ImeState.Unknown)
+            return;
+
         StateText.Text = state == ImeState.On
             ? (string.IsNullOrWhiteSpace(onText) ? AppSettings.DefaultOnText : onText)
             : (string.IsNullOrWhiteSpace(offText) ? AppSettings.DefaultOffText : offText);
