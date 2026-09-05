@@ -14,7 +14,7 @@
                    FontSize="18" FontWeight="Bold" Margin="0,0,0,10" />
 
         <TextBlock TextWrapping="Wrap" Margin="0,0,0,10"
-                   Text="「開始」を押したら 8 秒以内に、半角/全角キーで何度か IME を ON/OFF 切り替えてください。タスクバーの表示が変化するのを検出して、自動で「あ」と「A」を学習します。" />
+                   Text="はじめに、タスクバーに IME モード表示(あ / A)が見えていることを確認してください。「開始」を押したら 8 秒以内に、半角/全角キーで何度か IME を ON/OFF 切り替えてください(「あ」と「A」をそれぞれ数回ずつ表示)。タスクバーの表示が変化するのを検出して、自動で「あ」と「A」を学習します。表示が「×」や空欄の状態では学習できません。" />
 
         <Button x:Name="StartButton" Content="開始" Padding="16,8"
                 FontSize="14" Click="Start_Click" />
